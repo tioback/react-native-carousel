@@ -13,7 +13,7 @@ var CarouselPager = React.createClass({
   },
 
   _onMomentumScrollEnd(e) {
-    var activePage = e.nativeEvent.contentOffset.x / this.props.width;
+    var activePage = Math.round(e.nativeEvent.contentOffset.x / this.props.width);
     this.props.onEnd(activePage);
   },
 

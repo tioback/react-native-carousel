@@ -35,24 +35,23 @@ var Carousel = React.createClass({
 
   getInitialState() {
     return {
-      activePage: this.props.initialPage > 0 ? this.props.initialPage : 0,
+      activePage: Math.max(this.props.initialPage, 0),
     };
   },
 
   getWidth() {
-    if (this.props.width !== null) {
-      return this.props.width;
-    } else {
-      return Dimensions.get('window').width;
-    }
+    let { width } = this.props;
+    return (width !== null) ? width : Dimensions.get('window').width;
   },
 
   componentDidMount() {
-    if (this.props.initialPage > 0) {
-      this.refs.pager.scrollToPage(this.props.initialPage, false);
+    let { initialPage, children, animate } = this.props;
+
+    if (initialPage > 0) {
+      this.refs.pager.scrollToPage(initialPage, false);
     }
 
-    if (this.props.animate && this.props.children){
+    if (animate && children) {
         this._setUpTimer();
     }
   },
@@ -63,32 +62,36 @@ var Carousel = React.createClass({
   },
 
   renderPageIndicator() {
-    if (this.props.hideIndicators === true) {
+    let { indicatorAtBottom, indicatorOffset, hideIndicators, children, indicatorSpace, indicatorSize, indicatorColor, inactiveIndicatorColor, indicatorText, inactiveIndicatorText } = this.props;
+
+    if (hideIndicators === true) {
       return null;
     }
 
-    var indicators = [],
-        indicatorStyle = this.props.indicatorAtBottom ? { bottom: this.props.indicatorOffset } : { top: this.props.indicatorOffset },
-        style, position;
+    let indicators = [], position, indicatorCurrentColor,
+        indicatorStyle = { [indicatorAtBottom ? "bottom" : "top"] : indicatorOffset },
+        calculatedWidth = children.length * indicatorSpace;
 
+    console.log("[blue] calculated indicator container width", calculatedWidth);
     position = {
-      width: this.props.children.length * this.props.indicatorSpace,
+      width: calculatedWidth,
+      left: (this.getWidth() - calculatedWidth) / 2
     };
-    position.left = (this.getWidth() - position.width) / 2;
+    console.log("left: ", position.left);
 
-    for (var i = 0, l = this.props.children.length; i < l; i++) {
-      if (typeof this.props.children[i] === "undefined") {
+    for (var i = 0, l = children.length; i < l; i++) {
+      if (typeof children[i] === "undefined") {
         continue;
       }
 
-      style = i === this.state.activePage ? { color: this.props.indicatorColor } : { color: this.props.inactiveIndicatorColor };
+      indicatorCurrentColor = (i === this.state.activePage) ? indicatorColor : inactiveIndicatorColor;
       indicators.push(
          <Text
-            style={[style, { fontSize: this.props.indicatorSize }]}
+            style={{ fontSize: indicatorSize, textAlign: "center", color: indicatorCurrentColor }}
             key={i}
-            onPress={this.indicatorPressed.bind(this,i)}
+            onPress={this.indicatorPressed.bind(this, i)}
           >
-             { i === this.state.activePage  ? this.props.indicatorText : this.props.inactiveIndicatorText }
+             { i === this.state.activePage  ? indicatorText : inactiveIndicatorText }
           </Text>
       );
     }
@@ -112,6 +115,7 @@ var Carousel = React.createClass({
   },
 
   _animateNextPage() {
+    console.log("animate next page")
      var activePage = 0;
      if (this.state.activePage < this.props.children.length - 1) {
          activePage = this.state.activePage + 1;
@@ -136,11 +140,14 @@ var Carousel = React.createClass({
 
   render() {
     return (
-      <View style={{ flex: 1 }}>
+      <View
+        style={{ flex: 1, borderWidth: 1, borderColor: "pink" }}
+        onLayout={({nativeEvent})=> console.log("[pink] carousel width", nativeEvent.layout.width)}
+      >
         <CarouselPager
           ref="pager"
           width={this.getWidth()}
-          contentContainerStyle={styles.container}
+          contentContainerStyle={[styles.container, {borderWidth: 1, borderColor: "yellow"}]}
           onBegin={this._onAnimationBeginPage}
           onEnd={this._onAnimationEnd}
         >
@@ -162,7 +169,7 @@ var styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     backgroundColor:'transparent',
-  },
+  }
 });
 
 module.exports = Carousel;
